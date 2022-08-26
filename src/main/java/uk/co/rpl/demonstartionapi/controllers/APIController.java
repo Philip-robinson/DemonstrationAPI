@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import uk.co.rpl.demonstartionapi.controllers.dto.ChangeStock;
 import uk.co.rpl.demonstartionapi.controllers.dto.InputProduct;
 import uk.co.rpl.demonstartionapi.controllers.dto.OutputProduct;
-import uk.co.rpl.demonstartionapi.controllers.dto.Status;
 import uk.co.rpl.demonstartionapi.storage.Store;
 
 import javax.validation.Valid;
 import java.util.List;
+import uk.co.rpl.demonstartionapi.mapping.ProductMapper;
 
 @RestController
 @AllArgsConstructor
@@ -22,19 +22,20 @@ import java.util.List;
 @RequestMapping("/api")
 public class APIController {
     private final Store store;
+    private final ProductMapper mapper;
 
     @PostMapping("/product")
     @ApiOperation(value="Create a product", authorizations={@Authorization("api-key")})
     public OutputProduct createProduct(@RequestBody @Valid InputProduct product){
         log.debug("Create new product: {}", product);
-        return OutputProduct.create(store.addProduct(product));
+        return mapper.toOutput(store.addProduct(product));
     }
 
     @GetMapping("/product/{productName}")
     @ApiOperation(value="get a product", authorizations={@Authorization("api-key")})
     public OutputProduct getProduct(@PathVariable String productName){
         log.debug("Get product named {}", productName);
-        return OutputProduct.create(store.getProduct(productName));
+        return mapper.toOutput(store.getProduct(productName));
     }
 
     @GetMapping("/products")
@@ -49,6 +50,6 @@ public class APIController {
     public OutputProduct amendStock(@PathVariable String productName,
                                     @RequestBody @Valid ChangeStock changeStock){
         log.debug("add {} additional items of type {} to stock", changeStock, productName);
-        return OutputProduct.create(store.updateStockLevel(productName, changeStock.getAdditionalStock()));
+        return mapper.toOutput(store.updateStockLevel(productName, changeStock.getAdditionalStock()));
     }
 }

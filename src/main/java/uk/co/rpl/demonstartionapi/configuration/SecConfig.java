@@ -1,8 +1,6 @@
-package uk.co.rpl.demonstartionapi.controllers;
+package uk.co.rpl.demonstartionapi.configuration;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,17 +14,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
 import javax.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
 @Order(1)
 @Slf4j
+@RequiredArgsConstructor
 public class SecConfig extends WebSecurityConfigurerAdapter {
-    private final String key;
-
-    public SecConfig(@Value("${security-api-key}") String key) {
-        this.key = key;
-    }
+    private final AppConfig config;
 
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
@@ -48,7 +44,7 @@ public class SecConfig extends WebSecurityConfigurerAdapter {
             @Override
             public Authentication authenticate(Authentication authentication) throws AuthenticationException {
                 var reqKey = (String) authentication.getPrincipal();
-                if (!key.equals(reqKey)) {
+                if (!config.getKey().equals(reqKey)) {
                     throw new BadCredentialsException("The API key was invalid or not provided.");
                 }
                 authentication.setAuthenticated(true);

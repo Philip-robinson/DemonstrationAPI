@@ -32,7 +32,9 @@ The following URIs are available:
 
 ## Implementation
 
-The Implementation will use Java, Spring MVC,  Lombok and Swagger.
+The Implementation will use Java, Spring MVC, Lombok, mapstruct and Swagger.
+
+
 
 
 

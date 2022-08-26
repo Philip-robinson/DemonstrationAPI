@@ -1,4 +1,4 @@
-package uk.co.rpl.demonstartionapi.controllers;
+package uk.co.rpl.demonstartionapi.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

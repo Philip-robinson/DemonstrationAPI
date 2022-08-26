@@ -1,9 +1,12 @@
 package uk.co.rpl.demonstartionapi.controllers.dto;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 
-@RequiredArgsConstructor
+@Data
 public class Status {
     public final String name = "Demonstration API";
-    public final String status;
+    private String branch;
+    private String version;
+    private String buildTime;
+    private String status;
 }

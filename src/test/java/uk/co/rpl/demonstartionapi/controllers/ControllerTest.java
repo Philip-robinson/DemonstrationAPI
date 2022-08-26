@@ -14,11 +14,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import org.mapstruct.factory.Mappers;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import uk.co.rpl.demonstartionapi.mapping.ProductMapper;
 
 class ControllerTest {
 
@@ -45,19 +47,21 @@ class ControllerTest {
     @BeforeEach
     void setUp() {
         service = mock(Store.class);
-        inst = new APIController(service);
+        inst = new APIController(service, Mappers.getMapper(ProductMapper.class));
         excHandler = new ExceptionHandlerAdvice();
 
         prod_1 = new Product(NAME_1, DESC_1, VAL_1, NUMBER_1);
         prod_2 = new Product(NAME_2, DESC_2, VAL_2, NUMBER_2);
         products = asList(prod_1, prod_2);
-        when(service.getAllNames()).thenReturn(products.stream().map(p->p.getName()).collect(Collectors.toList()));
+        when(service.getAllNames()).thenReturn(products.stream().
+                map(p->p.getName()).collect(Collectors.toList()));
         when(service.getProduct(NAME_1)).thenReturn(prod_1);
         when(service.getProduct(NAME_2)).thenReturn(prod_2);
         when(service.updateStockLevel(any(), anyInt())).thenReturn(prod_1);
-        when(service.getProduct(BAD_NAME)).thenThrow(new ProductDoesNotExistException("Prod none existent"));
-        when(service.getProduct(ERROR_NAME)).thenThrow(new ProductAlreadyExistsException("Prod none existent"));
-        when(service.status()).thenReturn(true);
+        when(service.getProduct(BAD_NAME)).
+                thenThrow(new ProductDoesNotExistException("Prod none existent"));
+        when(service.getProduct(ERROR_NAME)).
+                thenThrow(new ProductAlreadyExistsException("Prod none existent"));
         doAnswer(c->{
             InputProduct arg = c.getArgument(0);
             return switch(arg.getName()){
@@ -76,30 +80,13 @@ class ControllerTest {
     }
 
     @Test
-    void getStatus() throws Exception {
-        mvc.perform(get("/")).
-                andExpect(status().is(200)).
-                andExpect(jsonPath("$.name").value("Demonstration API")).
-                andExpect(jsonPath("$.status").value("Online"));
-    }
-
-    @Test
-    void getStatusOffline() throws Exception {
-        when(service.status()).thenReturn(false);
-        mvc.perform(get("/")).
-                andExpect(status().is(200)).
-                andExpect(jsonPath("$.name").value("Demonstration API")).
-                andExpect(jsonPath("$.status").value("Offline"));
-    }
-
-    @Test
     void createProduct() throws Exception {
         var body = Map.of("name", NAME_1,
                 "description", DESC_1,
                 "priceInPence", VAL_1,
                 "numberInStock", NUMBER_1);
         var bodyText = new ObjectMapper().writeValueAsString(body);
-        mvc.perform(post("/product").
+        mvc.perform(post("/api/product").
                         contentType(MediaType.APPLICATION_JSON).
                         content(bodyText)).
                 andExpect(status().is(200)).
@@ -117,7 +104,7 @@ class ControllerTest {
                 "numberInStock", NUMBER_2);
         var bodyText = new ObjectMapper().writeValueAsString(body);
 
-        mvc.perform(post("/product").
+        mvc.perform(post("/api/product").
                         contentType(MediaType.APPLICATION_JSON).
                         content(bodyText)).
                 andExpect(status().is(400));
@@ -132,7 +119,7 @@ class ControllerTest {
                 "numberInStock", NUMBER_2);
         var bodyText = new ObjectMapper().writeValueAsString(body);
 
-        mvc.perform(post("/product").
+        mvc.perform(post("/api/product").
                         contentType(MediaType.APPLICATION_JSON).
                         content(bodyText)).
                 andExpect(status().is(400));
@@ -146,7 +133,7 @@ class ControllerTest {
                 "numberInStock", NUMBER_2);
         var bodyText = new ObjectMapper().writeValueAsString(body);
 
-        mvc.perform(post("/product").
+        mvc.perform(post("/api/product").
                         contentType(MediaType.APPLICATION_JSON).
                         content(bodyText)).
                 andExpect(status().is(400));
@@ -161,7 +148,7 @@ class ControllerTest {
                 "numberInStock", -3);
         var bodyText = new ObjectMapper().writeValueAsString(body);
 
-        mvc.perform(post("/product").
+        mvc.perform(post("/api/product").
                         contentType(MediaType.APPLICATION_JSON).
                         content(bodyText)).
                 andExpect(status().is(400));
@@ -177,7 +164,7 @@ class ControllerTest {
                 "numberInStock", NUMBER_2);
         var bodyText = new ObjectMapper().writeValueAsString(body);
 
-        mvc.perform(post("/product").
+        mvc.perform(post("/api/product").
                         contentType(MediaType.APPLICATION_JSON).
                         content(bodyText)).
                 andExpect(status().is(400));
@@ -191,7 +178,7 @@ class ControllerTest {
                 "priceInPence", VAL_1,
                 "numberInStock", NUMBER_2);
         var bodyText = new ObjectMapper().writeValueAsString(body);
-        mvc.perform(post("/product").
+        mvc.perform(post("/api/product").
                         contentType(MediaType.APPLICATION_JSON).
                         content(bodyText)).
                 andExpect(status().is(400));
@@ -200,7 +187,7 @@ class ControllerTest {
 
     @Test
     void getProduct() throws Exception {
-        mvc.perform(get("/product/"+NAME_2)).
+        mvc.perform(get("/api/product/"+NAME_2)).
                 andExpect(status().is(200)).
                 andExpect(jsonPath("$.name").value(NAME_2)).
                 andExpect(jsonPath("$.description").value(DESC_2));
@@ -210,7 +197,7 @@ class ControllerTest {
 
     @Test
     void getAll() throws Exception {
-        mvc.perform(get("/products")).
+        mvc.perform(get("/api/products")).
                 andExpect(status().is(200)).
                 andDo(print()).
                 andExpect(jsonPath("$").isArray()).
@@ -226,7 +213,7 @@ class ControllerTest {
         var additionalStock = 23;
         var body = Map.of("additionalStock", additionalStock);
         var bodyText = new ObjectMapper().writeValueAsString(body);
-        mvc.perform(patch("/product/{name}/amendStock", NAME_1).
+        mvc.perform(patch("/api/product/{name}/amendStock", NAME_1).
                 contentType(MediaType.APPLICATION_JSON).
                 content(bodyText)).
                 andExpect(status().is(200)).
